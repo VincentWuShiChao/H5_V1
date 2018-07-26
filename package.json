@@ -1,0 +1,35 @@
+{
+  "name": "h5_server",
+  "version": "1.0.0",
+  "description": "first test",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "ejs": "^2.6.1",
+    "eslint-plugin-jsx-a11y": "^6.1.0",
+    "mysql": "^2.15.0",
+    "querystring": "^0.2.0",
+    "request": "^2.87.0",
+    "url": "^0.11.0"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "lib-qqwry": "^1.0.2",
+    "line-reader": "^0.4.0",
+    "log4js": "^2.7.0",
+    "log4jx": "0.0.4",
+    "node-line-reader": "0.0.2",
+    "pm2": "^2.10.4",
+    "q": "^1.5.1",
+    "sha1": "^1.1.1",
+    "ws": "^5.2.0"
+  }
+}
