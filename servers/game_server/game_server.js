@@ -32,6 +32,10 @@ const PENALTY_TYPE_BAOSHI=13.3*3;//宝石惩罚系数
 var allMatchingPlayer=[];
 var MathcingPlayerState=0;//资源被占用状态
 var timers=1000;//间隔时间
+
+
+var servers=[];
+
 //连接断开
 function on_session_exit(session,server,port){
     try{
@@ -132,6 +136,7 @@ function reback(json_data){
         if(allMatchingPlayer[i].name==json_data.name){
             console.log(json_data.name,"从匹配界面返回");
             allMatchingPlayer.splice(i,1);
+			console.log("从匹配界面返回后的数组:",allMatchingPlayer);
             break;
         }
     }
@@ -488,33 +493,38 @@ function start_game_server(ip,port){
     console.log("start game server..",ip,port);
     server=new websocket.Server({
         //host:ip,
-        port:port
+        port:port,
     });
+	servers.push(server);
     //----------------------------------------------------------------------------------------服务器广播-----------------------------------------------------------------------------------------------
     server.broadcast= function (room,tag,json_data,map) {
         console.log("广播中++++++++++++++++++++++++++++++++++++++++++++++++++++++");
         switch (tag){
             case "matching":
-                console.log("匹配成功!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                server.clients.forEach(function each(client) {
+                console.log("匹配成功!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",room);
+			    console.log("clients:",server.clients);
+				servers.forEach(function (server){
+					 server.clients.forEach(function each(client) {
+						for(let i=0;i<room.playerList.length;i++){
+							console.log("匹配成功：room:"+i+"个人：",room.playerList[i].name);
+							if(room.playerList[i].name==client.user.name){
 
-                    for(let i=0;i<room.playerList.length;i++){
-                        console.log("匹配成功：room:"+i+"个人：",room.playerList[i].name);
-                        if(room.playerList[i].name==client.user.name){
-
-                            console.log("matching----------------------------------------");
-                            result.result="ok";
-                            result.data=room;
-                            result.msg="broadcast";
-                            client.send(JSON.stringify(result));
-                        }
-                    }
-                });
+								console.log("matching----------------------------------------");
+								result.result="ok";
+								result.data=room;
+								result.msg="broadcast";
+								client.send(JSON.stringify(result));
+							}
+						}
+					});
+				})
+               
                 break;
             case "result_score":
                 console.log("result_score!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                 //console.log("result_score_room:",room);
-                server.clients.forEach(function each(client) {
+				servers.forEach(function (server){
+					server.clients.forEach(function each(client) {
                     for(let i=0;i<room.playerList.length;i++){
                         if(room.playerList[i].name==client.user.name){
                             result.result="ok";
@@ -525,6 +535,8 @@ function start_game_server(ip,port){
                         }
                     }
                 });
+				});
+                
                 break;
             case "otherState":
                 console.log("otherState!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -535,7 +547,8 @@ function start_game_server(ip,port){
                         break;
                     }
                 }
-                server.clients.forEach(function each(client) {
+				servers.forEach(function (server){
+					server.clients.forEach(function each(client) {
                     if(room.playerList[other_tag].name==client.user.name){
                         result.result="ok";
                         result.data=room;
@@ -544,10 +557,13 @@ function start_game_server(ip,port){
                         client.send(JSON.stringify(result));
                     }
                 });
+				});
+                
                 break;
             case "initMap"://map:{row:json_data.map.row, col:json_data.map.col, nodeArray:[{row:0, col:0, state:0, color:0, type:json_data.type}]};
                 console.log("initMap!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                server.clients.forEach(function each(client) {
+				servers.forEach(function (server){
+					server.clients.forEach(function each(client) {
                     if(json_data.name==client.user.name){
                         result.result="ok";
                         result.data=room;
@@ -556,10 +572,13 @@ function start_game_server(ip,port){
                         client.send(JSON.stringify(result));
                     }
                 });
+				});
+                
                 break;
             case "changeMap":
                 console.log("changeMap!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                server.clients.forEach(function each(client) {
+				servers.forEach(function (server){
+					server.clients.forEach(function each(client) {
                     if(json_data.name==client.user.name){
                         console.log("tag=============changeMap");
                         result.result="ok";
@@ -569,10 +588,13 @@ function start_game_server(ip,port){
                         client.send(JSON.stringify(result));
                     }
                 });
+				});
+                
                 break;
             case "punishMap":
                 console.log("punishMap!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                server.clients.forEach(function each(client) {
+				servers.forEach(function (server){
+					server.clients.forEach(function each(client) {
                     if(json_data.name==client.user.name){
                         result.result="ok";
                         result.data=room;
@@ -583,10 +605,13 @@ function start_game_server(ip,port){
                         console.log("tag================punishMap:",json_data.name);
                     }
                 });
+				});
+                
                 break;
             case "enemyDisappear":
                 console.log("enemyDisappear!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                server.clients.forEach(function each(client) {
+				servers.forEach(function (server){
+					server.clients.forEach(function each(client) {
                     if(json_data.name==client.user.name){
                         result.result="ok";
                         result.data=room;
@@ -594,10 +619,13 @@ function start_game_server(ip,port){
                         client.send(JSON.stringify(result));
                     }
                 });
+				});
+                
                 break;
             case "addScore":
                 console.log("addScore!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                server.clients.forEach(function each(client) {
+				servers.forEach(function (server){
+					 server.clients.forEach(function each(client) {
                     if(json_data.name==client.user.name){
                         result.result="ok";
                         result.data=room;
@@ -606,10 +634,13 @@ function start_game_server(ip,port){
                         client.send(JSON.stringify(result));
                     }
                 });
+				});
+               
                 break;
             case "loadOk":
                 console.log("loadOk!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                server.clients.forEach(function each(client) {
+				servers.forEach(function (server){
+					 server.clients.forEach(function each(client) {
 
                     for(let i=0;i<room.playerList.length;i++){
                         if(room.playerList[i].name==client.user.name){
@@ -621,10 +652,13 @@ function start_game_server(ip,port){
                         }
                     }
                 });
+				});
+               
                 break;
             case "sendResult":
                 console.log("sendResult!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                server.clients.forEach(function each(client) {
+				servers.forEach(function (server){
+					server.clients.forEach(function each(client) {
                     if(json_data.name==client.user.name){
                         result.result="ok";
                         result.data=room;
@@ -633,11 +667,14 @@ function start_game_server(ip,port){
                         console.log("sendResult:",json_data.name);
                     }
                 });
+				});
+                
                 break;
         }
 
     };
     server.on("connection", function (session) {
+		console.log("有用户连接长连接:",port);
         session.on("close", function () {
             on_session_exit(session,server,port);
         });
@@ -841,7 +878,7 @@ function start_game_server(ip,port){
                             }
                             break;
                         case 0://测试匹配
-                            if(allMatchingPlayer.length==0){
+                           /* if(allMatchingPlayer.length==0){
                                 //将玩家放入匹配池
                                 addMatching(session,allMatchingPlayer,json_data)
                                     .then(function (data) {
@@ -850,7 +887,12 @@ function start_game_server(ip,port){
                             }else {
                                 //计算匹配分段
                                 matching(json_data,session);
-                            }
+                            }*/
+							console.log("保持长连接");
+						
+               
+                session.send("保持长连接");
+   
                             break;
                         case 5://返回上一个界面
                             tokenlist_game=changeOldTime(json_data,tokenlist_game);//7_19
@@ -1100,7 +1142,7 @@ function start_game_server(ip,port){
                             },function(data){
 								console.log("game_server:1101",data);	
 							});
-
+							break;
                     }
                 }
             });
@@ -2139,6 +2181,7 @@ exports.setTokenList= function (tokenlist) {
 };
 var DateTime=require('../../utils/Date');
 exports.getCacheGame= function (req,res) {
+	console.log("gameServer-2184:","hahahah");
     let list={
         "allMatchingPlayer":allMatchingPlayer,
         "global_session_list":global_session_list
@@ -2148,5 +2191,5 @@ exports.getCacheGame= function (req,res) {
         logger_2=logger.useLogger(DateTime.getDate().toString()+"_game_server_cache");
         logger_2.info(list);
     });
-    return res.send({"list":""});
+    return res.send({"list":list});
 };

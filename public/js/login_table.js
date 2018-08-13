@@ -2,7 +2,7 @@ function Apply(){
     var obj = document.getElementById("logs"); //selectid
     var index = obj.selectedIndex; // ѡ������
     var text = obj.options[index].text;
-    $.post('http://47.92.126.116/Apply',{"text":text},function (data,status) {
+    $.post('http://m5.ykplay.com/Apply',{"text":text},function (data,status) {
       data=JSON.parse(data);
       alert(data.logs_list.length);
       var table=document.getElementById("table");

@@ -46,12 +46,12 @@
 					var name=document.getElementById("Name").value;
 					var password=document.getElementById("Password").value;
 					alert("name:"+name+"password:"+password);
-					$.post('http://47.92.126.116/Verify',{"name":name,"password":password},function (data,status) {
+					$.post('http://m5.ykplay.com/Verify',{"name":name,"password":password},function (data,status) {
 
 						 if(data.msg==1){
 							 var r=confirm("信息正确");
 							 if(r==true){
-								window.location.replace("http://47.92.126.116/Home?name="+name);
+								window.location.replace("http://m5.ykplay.com/Home?name="+name);
 							 }
 						 }else {
 							 alert(data.msg);

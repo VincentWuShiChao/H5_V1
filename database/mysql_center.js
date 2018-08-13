@@ -5,11 +5,11 @@
 var mysql=require('mysql');
 
 var conn_pool=mysql.createPool({
-    host:"127.0.0.1" ,
+    host:"172.26.14.117" ,
     port:3306,
-    database:"mysql_center",
+    database:"h1v1_center",
     user:"root",
-    password:"03251222yxn"
+    password:"Zjw#19991223.."
 });
 
 function mysql_exce(sql,callback){

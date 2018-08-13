@@ -15,6 +15,8 @@ var app=express();
 var http=require("http");
 var app1=express();
 
+var ports=[6080,6081,6082,6083,6084];
+
 app.set("view engine",'ejs');
 //路由中间件
 app.use(express.static("../public"));
@@ -35,17 +37,19 @@ app.all('*', function(req, res, next) {
 var router_main=require('../routers/main');
 app.use("/",router_main);
 
-
 http.createServer(app).listen(6000,"0.0.0.0", function () {
+    /*let person=new Person("张三",22);
+    console.log(person.getAge());*/
     /***********************************动态分配空闲游戏服务器*************************************/
     console.log("app success open");
-	request({
+	/*request({
         method: 'POST',
         url:GlobalUrl.GlobalUrl+":6000/getServerState"
         //form:{tag:'open',id:1,flag:true,port:6080}
     }, function(err, respose,body){
         //返回游戏服务器的所有状态
         var data=JSON.parse(respose.body);
+        //console.log(data);
         var port=data.data.port;
         console.log(port);
         if(port!=0){
@@ -61,7 +65,15 @@ http.createServer(app).listen(6000,"0.0.0.0", function () {
         }else {
             console.log("server full!");
         }
-    });
+
+    });*/
+
+	//game_server.open("localhost",6080);
+	for(let i=0;i<ports.length;i++){
+		game_server.open("localhost",ports[i]);
+	}
+	
+
 });
 process.on("exit", function () {
     console.log("process shutdown!");

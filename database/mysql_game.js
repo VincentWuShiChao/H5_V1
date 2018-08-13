@@ -6,19 +6,19 @@ var mysql=require('mysql');
 
 //user数据库
 var conn_pool=mysql.createPool({
-    host:"127.0.0.1" ,
+    host:"172.26.14.117" ,
     port:3306,
-    database:"mysql_user",
+    database:"h1v1_user",
     user:"root",
-    password:"03251222yxn"
+    password:"Zjw#19991223.."
 });
 //门服务数据库
 var conn_pool_server_state=mysql.createPool({
-    host:"127.0.0.1",
+    host:"172.26.14.117",
     port:3306,
-    database:"mysql_center",
+    database:"h1v1_center",
     user:"root",
-    password:"03251222yxn"
+    password:"Zjw#19991223.."
 });
 
 //user数据库的执行语句
@@ -149,5 +149,17 @@ exports.updateIntegral_loser= function (name,integral,victory,games,callback) {
     });
 };
 
+exports.getWorldRank=function(callback){
 
+	let sql=`select * from  player order by integral asc`;
+	 mysql_exce(sql, function (err,sql_result,fields_desic) {
+        console.log("^^^^^^^^^^^^^^^^^:",sql_result);
+        if(err){
+            callback(err,null);
+        }else{
+			callback(null,sql_result);
+		}
+    });
+
+}
 

@@ -9,13 +9,13 @@ function submit(){
     var exper = document.getElementById("exper"); //selectid
     var json_player={"pid":parseInt(pid.value),"name":name.value,"integral":parseInt(integral.value),"universal":universal.value,"time":time.value,"logintype":parseInt(logintype.value),"level":parseInt(level.value),"exper":parseInt(exper.value)};
 
-  $.post('http://47.92.126.116/editPlayerSubmit',json_player,function (data,status) {
+  $.post('http://m5.ykplay.com/editPlayerSubmit',json_player,function (data,status) {
       data=JSON.parse(data);
       alert(data.msg);
       if(data.msg===1){
         var r=confirm("修改成功");
         if(r==true){
-          window.location.replace("http://47.92.126.116/edit_data");
+          window.location.replace("http://m5.ykplay.com/edit_data");
         }
 
       }else{

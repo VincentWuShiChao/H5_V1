@@ -21,6 +21,7 @@ var Q=require('q');
 var gameServer=require('../game_server/game_server.js');
 var DateTime=require('../../utils/Date');
 var mysql_user=require('../../database/mysql_user');
+var mysql_game=require('../../database/mysql_game');
 var path=require('path');
 
 var crypto=require("crypto");
@@ -89,48 +90,52 @@ function conn_user_server(router,json,callback){
     //向数据库中保存用户信息
     if(router=="/wxloginuser"){
         //将中文进行编码
-        let buf=new Buffer(json.body.nickname);
-        let token_string=buf.toString("hex");
-        let type=json.type;
+        var buf=new Buffer(json.body.nickname);
+        var token_string=buf.toString("hex");
+        var type=1;
+		var openid=json.body.openid;
+		var headimgurl=json.body.headimgurl;
         //console.log("wxloginUser:",token_string);
-        config.url=GlobalUrl.GlobalUrl+":6001"+router+"?name="+token_string+"&type="+type;
+        config.url=GlobalUrl.GlobalUrl+":6001"+router+"?name="+token_string+"&type="+type+"&openid="+openid+"&headimgurl="+headimgurl;
     }
 	//向数据库中保存用户信息(微信小游戏版本)
     if(router=="/wxloginuser_1"){
         //将中文进行编码
 		console.log("101:",json);
-        let buf=new Buffer(json.nickName);
-        let token_string=buf.toString("hex");
-        let type=1;
-        let openid=json.openId;
+        var buf=new Buffer(json.nickName);
+        var token_string=buf.toString("hex");
+        var type=1;
+		var openid=json.openId;
+		var  avatarUrl=json.avatarUrl;
         //console.log("wxloginUser:",token_string);
-        config.url=GlobalUrl.GlobalUrl+":6001"+router+"?name="+token_string+"&type="+type+"&openid="+openid;
+        config.url=GlobalUrl.GlobalUrl+":6001"+router+"?name="+token_string+"&type="+type+"&openid="+openid+"&avatarUrl="+avatarUrl;
     }
     //查询用户是否为第一次登录游戏
     if(router=="/isFirstLogin"){
-        let buf=new Buffer(json.body.nickname);
-        let token_string=buf.toString("hex");
-        config.url=GlobalUrl.GlobalUrl+":6001"+router+"?name="+token_string;
+        var buf=new Buffer(json.body.nickname);
+        var token_string=buf.toString("hex");
+		var openid=json.body.openid;
+        config.url=GlobalUrl.GlobalUrl+":6001"+router+"?openid="+openid+"&name="+token_string;
     }
  //查询用户是否为第一次登录游戏(微信小游戏版本)
     if(router=="/isFirstLogin_1"){
 		console.log("115:",typeof json);
-		console.log("116:",json);
-        let buf=new Buffer(json.nickName);
-        let token_string=buf.toString("hex");
-        let openid=json.openId;
+		console.log("116:",json)
+        var buf=new Buffer(json.nickName);
+        var token_string=buf.toString("hex");
+		var openid=json.openId;
         config.url=GlobalUrl.GlobalUrl+":6001"+router+"?openid="+openid+"&name="+token_string;
     }
     //微信支付
     if(router=="/wxpay"){
-        let buf=new Buffer(json);
-        let token_string=buf.toString("hex");
+        var buf=new Buffer(json);
+        var token_string=buf.toString("hex");
         config.url=GlobalUrl.GlobalUrl+":6001"+router+"?message="+token_string;
     }
     //微信回调
     if(router=="/wxnotify"){
-        let buf=new Buffer(json);
-        let token_string=buf.toString("hex");
+        var buf=new Buffer(json);
+        var token_string=buf.toString("hex");
         config.url=GlobalUrl.GlobalUrl+":6001"+router+"?content="+token_string;
     }
     request(config, function(err, res, body){
@@ -146,6 +151,7 @@ function isFirstLogin_user(client_ip,result_json,callback){
                 var buf=new Buffer(result_json.body.nickname);
                 var buf_name=buf.toString("hex");
                 console.log("buf_name:",buf_name);
+				let openid=result_json.body.openid;
                 mysql_user.getPlayerByName(buf_name, function (err,data_name) {
                     logger.setConfig(DateTime.getDate().toString()+"_register","register", function (data_1) {
                         var buf=new Buffer(data_name[0].name,"hex");
@@ -168,6 +174,7 @@ function isFirstLogin_user(client_ip,result_json,callback){
 //------------------------------------------------------------------------------------判断用户是否为首次登录(微信小游戏版)-------------------------------------------------------------------------------------------------------------------
 function isFirstLogin_user_1(client_ip,result_json,callback){
     conn_user_server("/isFirstLogin_1",result_json, function (result_data) {
+		console.log("centerServer-176:",result_data);
         if(result_data=="null"){
             conn_user_server("/wxloginuser_1",result_json, function (data) {
                 var buf=new Buffer(result_json.nickName);
@@ -282,6 +289,7 @@ exports.userMsg= function (req,res) {
     res=header(res);
     var has_user=false;
     console.log("nickname:",result_json.body);
+	let openid=result_json.body.openid;
     for(let i=0;i<tokenlist.getTokenList().length;i++){
         if(tokenlist.getTokenList()[i].username==result_json.body.nickname){
             has_user=true;
@@ -359,7 +367,7 @@ exports.userMsg= function (req,res) {
 };
 var aeskey="";
 var iv="";
-var session_key="";
+var session_key=[];
 var appid="";
 const sha1 = require("sha1");
 var WXBizDataCrypt=require("../../utils/WXBizDataCrypt")
@@ -386,6 +394,36 @@ exports.LoginCode= function (req,res) {
                 result:"ok",
           };
 		console.log("session_key:",JSON.parse(res1.body).session_key);
+		session_key.push(JSON.parse(res1.body).session_key);
+		result.result="ok";
+		result.msg="sessionKey";
+		result.data=JSON.parse(res1.body).session_key;
+		res.send(JSON.stringify(result));
+		
+    });
+};
+//微信小游戏登录入口
+exports.LoginCodeGet= function (req,res) {
+	var arg=url.parse(req.url).query;
+    appid=qs.parse(arg)["appid"];
+	let secret=qs.parse(arg)["secret"];;
+	let code=qs.parse(arg)["code"];
+	/*request({
+			method:"get",
+			url:"https://api.weixin.qq.com/sns/oauth2/access_token?appid="+appid+"&secret="+secret+"&code="+code+"&grant_type=authorization_code"
+		},function(err,res2,body){
+			console.log("微信返回的用户信息：",res2.body);
+		});*/
+	 request({
+		method: 'get',
+        url:"https://api.weixin.qq.com/sns/jscode2session?appid="+appid+"&secret="+secret+"&js_code="+code+"&grant_type=authorization_code"
+	 }, function(err, res1, body){
+        //用户服务器返回的数值
+        console.log("微信返回的信息：",res1.body);
+		 let result={
+                result:"ok",
+          };
+		console.log("session_key:",JSON.parse(res1.body).session_key);
 		session_key=JSON.parse(res1.body).session_key;
 		result.result="ok";
 		result.msg="sessionKey";
@@ -396,11 +434,106 @@ exports.LoginCode= function (req,res) {
 };
 //微信小游戏用户信息
 exports.UserInfo=function(req,res){
-	let signature2 = sha1(req.body.rawData + session_key);
+	for(let i=0;i<session_key.length;i++){
+		if(session_key[i]===req.body.sessionKey){
+			let signature2 = sha1(req.body.rawData + session_key[i]);
     if (req.body.signature != signature2) return res.json("数据签名校验失败");
     // 解密
-    let pc = new WXBizDataCrypt(appid, session_key)
+    let pc = new WXBizDataCrypt(appid, session_key[i])
     let data = pc.decryptData(req.body.encryptedData,req.body. iv)
+    console.log('解密后用户信息: ', data);
+	 console.log('解密后用户信息类型: ', typeof data);
+	
+	var client_ip=req.get("X-Real-IP") || req.get("X-Forwarded-For") || req.ip;
+	res=header(res);
+    var has_user=false;
+    for(let i=0;i<tokenlist.getTokenList().length;i++){
+        if(tokenlist.getTokenList()[i].username==data.nickName){
+            has_user=true;
+            has_token_msg=tokenlist.getTokenList()[i].safeCode;
+            break;
+        }
+    }
+    if(has_user==false){
+        console.log("用户第一次登录该游戏");
+        token.createToken(data, function (err,result_token) {
+            //result.token=result_token;
+            var json_token={
+                "username":data.nickName,
+                "validTimes":token.getValidTimes(),
+                "safeCode":result_token,
+				"oldTime":(new Date()).getTime()//7_19
+            };
+            tokenlist.setToken(json_token);
+            gameServer.setTokenList(tokenlist);//将用户信息token传给游戏服务器
+            //判断用户是否为首次登录
+            isFirstLogin_user_1(client_ip,data, function (data) {
+				console.log("centerServer-469:",data);
+                var result_data=JSON.parse(data);
+                var buf_name=new Buffer(result_data.name,"hex");
+                var decode_name=buf_name.toString();
+                result_data.name=decode_name;
+                data=JSON.stringify(result_data);
+
+
+                let result={
+                    result:"ok",
+                    msg:"userMsg_1",
+                    data:data,
+                    token:result_token
+                };
+				console.log("给用户发送userMsg");
+                res.send(JSON.stringify(result));
+                logger.setConfig(DateTime.getDate().toString()+"_login","login", function (data_1) {
+                    console.log(data);
+                    data=JSON.parse(data);
+                    data.loginTime=new Date().getHours()+":"+new Date().getMinutes();
+                    data.ipAddr=ipParse.parse_ip(client_ip);
+                    logger.useLogger(DateTime.getDate().toString()+"_login").info(JSON.stringify(data));
+                });
+            });
+        });
+    }else {
+        console.log("此人的token存在");
+        //判断用户是否为首次登录
+        isFirstLogin_user_1(client_ip,data, function (data) {
+
+            var result_data=JSON.parse(data);
+            var buf_name=new Buffer(result_data.name,"hex");
+            var decode_name=buf_name.toString();
+            result_data.name=decode_name;
+            data=JSON.stringify(result_data);
+
+            let result={
+                result:"ok",
+                msg:"userMsg_1",
+                data:data,
+                token:has_token_msg
+            };
+            res.send(JSON.stringify(result));
+            logger.setConfig(DateTime.getDate().toString()+"_login","login", function (data_1) {
+                console.log(data);
+                data=JSON.parse(data);
+                data.loginTime=new Date().getHours()+":"+new Date().getMinutes();
+                data.ipAddr=ipParse.parse_ip(client_ip);
+                logger.useLogger(DateTime.getDate().toString()+"_login").info(JSON.stringify(data));
+            });
+        });
+    }
+			break;
+		}
+	
+	}
+	
+}
+//微信小游戏用户信息
+exports.UserInfoGet=function(req,res){
+	var arg=url.parse(req.url).query;
+	let signature2 = sha1(qs.parse(arg)["rawData"] + session_key);
+    if (qs.parse(arg)["signature"] != signature2) return res.json("数据签名校验失败");
+    // 解密
+    let pc = new WXBizDataCrypt(appid, session_key)
+    let data = pc.decryptData(qs.parse(arg)["encryptedData"],qs.parse(arg)["iv"] )
     console.log('解密后用户信息: ', data);
 	 console.log('解密后用户信息类型: ', typeof data);
 	
@@ -701,7 +834,13 @@ exports.showTable= function (req,res) {
             let table_name=client_data.text;
             if(table_name=="player"){
                 mysql_user.getAllPlayer(function (err,all_data) {
+
                     console.log(all_data);
+					all_data.forEach(function (each){
+						let buf=new Buffer(each.name,"hex");
+						let decode_string=buf.toString();
+						each.name=decode_string;
+					});
                     res.send({playerList:all_data});//7_20
                 });
             }
@@ -880,4 +1019,38 @@ exports.notify= function (req,res,next) {
     })
 };
 
+exports.getWorldRank=function(req,res){
 
+	res=header(res);
+	mysql_game.getWorldRank(function(err,sql_result){
+	
+		if(err){
+			console.log("获取世界排行失败");
+		}else{
+			if(sql_result.length===0){
+				let result={
+					result:"ok",
+					msg:"getWorldRank",
+					data:null
+				};
+				res.send(result);
+				
+			}else{
+				sql_result.forEach(function (each){
+					let buf=new Buffer(each.name,"hex");
+					let decode_string=buf.toString();
+					each.name=decode_string;
+				});
+				let result={
+					result:"ok",
+					msg:"getWorldRank",
+					data:sql_result
+				};
+				res.send(result);
+			}
+		
+		}
+	
+	})
+
+}

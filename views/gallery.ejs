@@ -23,8 +23,8 @@
     <script src="js/jquery2.0.3.min.js"></script>
     <script type="text/javascript">
         function showServer(){
-            $.post('http://localhost:6000/GetCacheGame_server',null,function (data,status) {
-
+            $.post('http://m5.ykplay.com/GetCacheGame_server',null,function (data,status) {
+		alert(data);
                 var json_data=JSON.parse(data);
                 var allMatchingPlayer=json_data.allMatchingPlayer;
                 var global_session_list=json_data.global_session_list;

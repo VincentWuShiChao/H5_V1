@@ -5,12 +5,13 @@ var mysql=require('mysql');
 
 var Date=require("../utils/Date");
 var conn_pool=mysql.createPool({
-    host:"127.0.0.1" ,
+    host:"172.26.14.117" ,
     port:3306,
-    database:"mysql_user",
+    database:"h1v1_user",
     user:"root",
-    password:"0325122yxn"
+    password:"Zjw#19991223.."
 });
+
 function mysql_exce(sql,callback){
     conn_pool.getConnection(function (err,conn) {
         if(err){
@@ -76,11 +77,12 @@ exports.getPlayerByOpenid= function (openid,callback) {
     })
 };
 //用户第一次微信登录，将用户信息保存到数据库
-exports.addPlayer= function (name,type,openid,callback) {
+exports.addPlayer= function (name,type,openid,avatarUrl,callback) {
 	console.log("mysql_user:81",openid);
     let time=Date.getDate();
-    var sql="insert into player(openid,name,integral,universal,time,logintype) values(\""+openid+"\",\""+name+"\",0,"+"\'{\"games\": 0, \"victory\": 0}\',\""+time+"\","+type+")";
-    mysql_exce(sql, function (err,sql_result,fields_desic) {
+    var sql="insert into player(openid,name,integral,universal,time,logintype,avatarUrl) values(\""+openid+"\",\""+name+"\",0,"+"\'{\"games\": 0, \"victory\": 0}\',\""+time+"\","+type+",\""+avatarUrl+"\""+")";
+	console.log("mysql_user-84:",sql);
+	mysql_exce(sql, function (err,sql_result,fields_desic) {
         if(err){
             //console.log(err);
             callback(err,null);

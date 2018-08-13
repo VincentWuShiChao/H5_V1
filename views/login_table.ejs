@@ -4,7 +4,7 @@
     var obj = document.getElementById("logs"); //selectid
     var index = obj.selectedIndex; // 选中索引
     var text = obj.options[index].text;
-    $.post('http://47.92.126.116/Apply',{"text":text},function (data,status) {
+    $.post('http://m5.ykplay.com/Apply',{"text":text},function (data,status) {
       alert(data);
       alert(typeof data);
       data=JSON.parse(data);
